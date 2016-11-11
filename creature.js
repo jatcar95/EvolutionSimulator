@@ -4,7 +4,7 @@ var MAX_BREED_DIF = 0.2;
 Creature.INITIAL_HUNGER = 0.5;
 Creature.INITIAL_BREED_DESIRE = 0.5;
 Creature.BASE_SIZE = 15;
-Creature.MAX_SPEED = 5;
+Creature.MAX_SPEED = 1;
 Creature.MAX_SIGHT = 200;
 Creature.MAX_HEARING = 200;
 Creature.MAX_AGE = 100;
@@ -13,17 +13,20 @@ function Creature(traits, xCoord, yCoord) {
 	this.traits = traits;
 	this.age = 0;
 	this.health = 1.0;
-	this.size = size;
 	this.hunger = Creature.INITIAL_HUNGER;
 	this.breedDesire = Creature.INITIAL_BREED_DESIRE;
 	this.location = {x: xCoord, y: yCoord};
 	this.mates = [];
 	this.food = [];
+
+	this.size = size;
 	this.intent = intent;
 	this.breed = breed;
 	this.observe = observe;
 	this.getDirection = getDirection;
 	this.speed = speed;
+	this.breed = breed; 
+	this.eat = eat;
 }
 
 function Traits(strength, speed, sight, hearing, feedingRate,
@@ -51,13 +54,15 @@ function breed(other) {
 	return new Creature(traits, other.location.x, other.location.y);
 }
 
-function observe(creatures, food) {
+function observe(world) {
+	var creatures = world.creatures;
+	var food = world.food;
 	var canvas = document.querySelector("#world");
 	var sightDist = Creature.MAX_SIGHT * this.traits.sight;
 	this.mates = [];
 	this.food = [];
 	for (var i = 0; i < creatures.length; i++) {
-		if (!(creatures[i].location.x == this.location.x && creatures[i].location.y == this.location.y) && 
+		if (this !== creatures[i] && 
 				Math.abs(creatures[i].location.x - this.location.x) <= sightDist &&
 				Math.abs(creatures[i].location.y - this.location.y) <= sightDist && 
 				canMate(this, creatures[i])) {
@@ -69,8 +74,7 @@ function observe(creatures, food) {
 	}
 
 	for (var i = 0; i < food.length; i++) {
-		if (!(food[i].x == this.location.x && food[i].y == this.location.y) && 
-				Math.abs(food[i].x - this.location.x) <= sightDist &&
+		if (Math.abs(food[i].x - this.location.x) <= sightDist &&
 				Math.abs(food[i].y - this.location.y) <= sightDist && 
 				canMate(this, creatures[i])) {
 			if (this.food[distBetween(this.location, food[i])] == null) {
@@ -114,7 +118,16 @@ function getDirection() {
 			}
 		}
 	} else { // intent === "search"
-		return "blah";
+		var direction = randInt(4);
+		if (direction == 0) {
+			return "up";
+		} else if (direction == 1) {
+			return "down";
+		} else if (direction == 2) {
+			return "left";
+		} else {
+			return "right";
+		}
 	}
 }
 
@@ -167,4 +180,22 @@ function distBetween(location1, location2) {
 
 function speed() {
 	return Creature.MAX_SPEED * this.traits.speed;
+}
+
+function breed() {
+	
+}
+
+function eat() {
+	if (this.food.length > 0) {
+		var closestFood = this.food[Object.keys(this.food)[0]][0];
+		if (Math.abs(closestFood.x - this.location.x) < this.size() / 2.0 &&
+				Math.abs(closestFood.y - this.location.y) < this.size() / 2.0) {
+			return closestFood;
+		} else {
+			return null;
+		}
+	} else {
+		return null;
+	}
 }
